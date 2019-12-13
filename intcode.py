@@ -13,6 +13,7 @@ class Intcode():
             6: {"nparams": 2, "fun": self.jif},
             7: {"nparams": 3, "fun": self.lt},
             8: {"nparams": 3, "fun": self.eq},
+            9: {"nparams": 1, "fun": self.rb},
             99: {"nparams": 0, "fun": self.exit},
         }
         self.reset()
@@ -20,6 +21,7 @@ class Intcode():
     def reset(self):
         self.m = self.m_start.copy()
         self.ip = 0
+        self.relative_base = 0
         self.completed = False
         while (self.input_buffer):
             self.input_buffer.pop()
@@ -61,8 +63,20 @@ class Intcode():
             self.ip += oc['nparams'] + 1
 
     def parse_params(self, param_mode, params):
-        return [self.m[p] if param_mode // 10 ** i % 10 == 0 else p for i, p in enumerate(params)]
-        
+        return list(self.param_generator(param_mode, params))
+
+    def param_generator(self, param_modes, params):
+        for i, p in enumerate(params):
+            param_mode = param_modes // 10 ** i % 10
+            if param_mode == 0:
+                yield self.m[p]
+            elif param_mode == 1:
+                yield p
+            elif param_mode == 2:
+                yield self.m[self.relative_base+p]
+            else:
+                return ValueError("Invalid parameter mode.")
+
     def add(self, param_mode, params):
         parsed_params = self.parse_params(param_mode, params)
         self.m[params[2]] = parsed_params[0] + parsed_params[1]
@@ -108,6 +122,11 @@ class Intcode():
         self.m[params[2]] = int(parsed_params[0] == parsed_params[1])
         return True
     
+    def rb(self, param_mode, params):
+        parsed_params = self.parse_params(param_mode, params)
+        self.relative_base = parsed_params[0]
+        return True
+        
     def exit(self, param_mode, params):
         self.completed = True
         return False
