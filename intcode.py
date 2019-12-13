@@ -59,8 +59,10 @@ class Intcode():
             return
         
         param_mode = self.m[self.ip] // 100
-        if oc['fun'](param_mode, self.m[self.ip + 1: self.ip + 1 + oc['nparams']]):
-            self.ip += oc['nparams'] + 1
+        if oc['fun'](
+            param_mode,
+            [self.m[i+1] for i in range(self.ip, self.ip+oc['nparams'])]):
+                self.ip += oc['nparams'] + 1
 
     def parse_params(self, param_mode, params):
         return list(self.param_generator(param_mode, params))
