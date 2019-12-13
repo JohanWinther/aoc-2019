@@ -14,15 +14,6 @@ def get_thruster_input(amps, phases):
                 amps[i].run_until_output()
     return amps[-1].output_buffer[0]
 
-def num_to_array(p, l):
-    a = []
-    while p > 0:
-        a.insert(0, p % 10)
-        p //= 10
-    while len(a) < l:
-        a.insert(0, 0)
-    return a
-
 
 with open('D7I.txt') as f:
     t = f.read().rstrip('\n')
@@ -37,10 +28,9 @@ amps = [Intcode(m, name=f'Amp {amp}') for amp in amps]
 
 
 max_thrust = 0
-for phases in permutations(range(5,10)):
+for phases in map(list, permutations(range(5, 10))):
     for i, amp in enumerate(amps):
         amp.set_previous(amps[(i-1) % len(amps)])
-    phases = num_to_array(phases, 5)
     new_thrust = get_thruster_input(amps, phases)
     if new_thrust > max_thrust:
         max_thrust = new_thrust
