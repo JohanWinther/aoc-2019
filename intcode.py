@@ -24,9 +24,9 @@ class Intcode():
         self.relative_base = 0
         self.completed = False
         while (self.input_buffer):
-            self.input_buffer.pop()
+            self.input_buffer.pop(0)
         while (self.output_buffer):
-            self.output_buffer.pop()
+            self.output_buffer.pop(0)
     
     def read_memory(self, loc):
         if loc < 0:
@@ -41,7 +41,7 @@ class Intcode():
         self.m[loc] = val
 
     def set_input(self, inp):
-        self.input_buffer.insert(0, inp)
+        self.input_buffer.append(inp)
 
     def set_previous(self, prev):
         self.input_buffer = prev.output_buffer
@@ -101,12 +101,12 @@ class Intcode():
         return True
 
     def inp(self, param_mode, params):
-        self.write_memory(params[0], self.input_buffer.pop())
+        self.write_memory(params[0], self.input_buffer.pop(0))
         return True
     
     def out(self, param_mode, params):
         parsed_params = self.parse_params(param_mode, params)
-        self.output_buffer.insert(0, parsed_params[0])
+        self.output_buffer.append(parsed_params[0])
         return True
 
     def jit(self, param_mode, params):
