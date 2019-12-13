@@ -1,7 +1,7 @@
 from intcode import Intcode
 from itertools import permutations
 
-def get_thruster_input(amps, phases):
+def calculate_thrust(amps, phases):
     for amp, phase in zip(amps, phases):
         amp.reset()
         amp.set_input(phase)
@@ -23,12 +23,12 @@ with open('D7I.txt') as f:
 m = [int(n) for n in t.split(',')]
 
 amps = [Intcode(m, name=f'Amp {name}') for name in ['A', 'B', 'C', 'D', 'E']]
+for i, amp in enumerate(amps):
+        amp.set_previous(amps[(i-1) % len(amps)])
 
 max_thrust = 0
 for phases in map(list, permutations(range(5, 10))):
-    for i, amp in enumerate(amps):
-        amp.set_previous(amps[(i-1) % len(amps)])
-    new_thrust = get_thruster_input(amps, phases)
+    new_thrust = calculate_thrust(amps, phases)
     if new_thrust > max_thrust:
         max_thrust = new_thrust
         max_phase = phases
