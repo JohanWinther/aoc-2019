@@ -137,7 +137,7 @@ class Intcode():
     
     def rb(self, param_mode, params):
         parsed_params = self.parse_params(param_mode, params)
-        self.relative_base = parsed_params[0]
+        self.relative_base += parsed_params[0]
         return True
         
     def exit(self, param_mode, params):
