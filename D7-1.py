@@ -26,7 +26,7 @@ for i, amp in enumerate(amps):
     amp.set_previous(amps[(i-1) % len(amps)])
 
 max_thrust = 0
-for phases in map(list, permutations(range(4))):
+for phases in map(list, permutations(range(5))):
     new_thrust = calculate_thrust(amps, phases)
     if new_thrust > max_thrust:
         max_thrust = new_thrust
