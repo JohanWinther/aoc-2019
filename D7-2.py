@@ -8,10 +8,11 @@ def get_thruster_input(amps, phases):
         amp.run_step()
 
     amps[0].set_input(0)
-    while not amps[-1].completed:
+    while not amps[-2].completed:
         for i in range(len(amps)):
             if not amps[i].completed:
                 amps[i].run_until_output()
+    amps[-1].run()
     return amps[-1].output_buffer[0]
 
 
@@ -21,11 +22,7 @@ with open('D7I.txt') as f:
 #t = "3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10"
 m = [int(n) for n in t.split(',')]
 
-amps = ['A', 'B', 'C', 'D', 'E']
-amps = [Intcode(m, name=f'Amp {amp}') for amp in amps]
-#for i in range(len(amps)):
-#    amps[i].set_next(amps[(i+1) % len(amps)])
-
+amps = [Intcode(m, name=f'Amp {name}') for name in ['A', 'B', 'C', 'D', 'E']]
 
 max_thrust = 0
 for phases in map(list, permutations(range(5, 10))):
