@@ -1,7 +1,7 @@
 class Intcode():
     def __init__(self, m, name='Unnamed Computer'):
         self.name = name
-        self.m_start = m.copy()
+        self.m_start = {i:v for i, v in enumerate(m)}
         self.input_buffer = []
         self.output_buffer = []
         self.opcodes = {
@@ -28,6 +28,17 @@ class Intcode():
         while (self.output_buffer):
             self.output_buffer.pop()
     
+    def read_memory(self, loc):
+        if loc < 0:
+            raise ValueError("Cannot write to negative memory locations.")
+        if loc not in self.m:
+            self.m[loc] = 0
+        return self.m[loc]
+
+    def write_memory(self, loc, val):
+        if loc < 0:
+            raise ValueError("Cannot write to negative memory locations.")
+        self.m[loc] = val
 
     def set_input(self, inp):
         self.input_buffer.insert(0, inp)
@@ -47,7 +58,7 @@ class Intcode():
         if self.completed:
             return
 
-        opcode = self.m[self.ip] % 100
+        opcode = self.read_memory(self.ip) % 100
         if opcode == 3 and len(self.input_buffer) == 0:
             return
 
@@ -58,10 +69,10 @@ class Intcode():
             self.completed = True
             return
         
-        param_mode = self.m[self.ip] // 100
+        param_mode = self.read_memory(self.ip) // 100
         if oc['fun'](
             param_mode,
-            [self.m[i+1] for i in range(self.ip, self.ip+oc['nparams'])]):
+            [self.read_memory(i+1) for i in range(self.ip, self.ip+oc['nparams'])]):
                 self.ip += oc['nparams'] + 1
 
     def parse_params(self, param_mode, params):
@@ -71,26 +82,26 @@ class Intcode():
         for i, p in enumerate(params):
             param_mode = param_modes // 10 ** i % 10
             if param_mode == 0:
-                yield self.m[p]
+                yield self.read_memory(p)
             elif param_mode == 1:
                 yield p
             elif param_mode == 2:
-                yield self.m[self.relative_base+p]
+                yield self.read_memory(self.relative_base+p)
             else:
                 return ValueError("Invalid parameter mode.")
 
     def add(self, param_mode, params):
         parsed_params = self.parse_params(param_mode, params)
-        self.m[params[2]] = parsed_params[0] + parsed_params[1]
+        self.write_memory(params[2], parsed_params[0] + parsed_params[1])
         return True
 
     def mul(self, param_mode, params):
         parsed_params = self.parse_params(param_mode, params)
-        self.m[params[2]] = parsed_params[0] * parsed_params[1]
+        self.write_memory(params[2], parsed_params[0] * parsed_params[1])
         return True
 
     def inp(self, param_mode, params):
-        self.m[params[0]] = self.input_buffer.pop()
+        self.write_memory(params[0], self.input_buffer.pop())
         return True
     
     def out(self, param_mode, params):
@@ -116,12 +127,12 @@ class Intcode():
 
     def lt(self, param_mode, params):
         parsed_params = self.parse_params(param_mode, params)
-        self.m[params[2]] = int(parsed_params[0] < parsed_params[1])
+        self.write_memory(params[2], int(parsed_params[0] < parsed_params[1]))
         return True
     
     def eq(self, param_mode, params):
         parsed_params = self.parse_params(param_mode, params)
-        self.m[params[2]] = int(parsed_params[0] == parsed_params[1])
+        self.write_memory(params[2], int(parsed_params[0] == parsed_params[1]))
         return True
     
     def rb(self, param_mode, params):
