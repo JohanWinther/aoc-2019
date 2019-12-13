@@ -43,7 +43,6 @@ class Intcode():
 
     def run_step(self):
         if self.completed:
-            #print(f'{self.name} has completed its program.')
             return
 
         opcode = self.m[self.ip] % 100
@@ -60,7 +59,6 @@ class Intcode():
         param_mode = self.m[self.ip] // 100
         if oc['fun'](param_mode, self.m[self.ip + 1: self.ip + 1 + oc['nparams']]):
             self.ip += oc['nparams'] + 1
-        return
 
     def parse_params(self, param_mode, params):
         return [self.m[p] if param_mode // 10 ** i % 10 == 0 else p for i, p in enumerate(params)]
