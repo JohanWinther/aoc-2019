@@ -38,3 +38,14 @@ computer.set_input(1)
 computer.run()
 out = computer.output_buffer
 print(out[0])
+
+# Day 9.2
+print("Day 9.2")
+with open(__file__.replace(".py", "I.txt")) as f:
+    t = f.readline().rstrip()
+m = [int(n) for i, n in enumerate(t.split(','))]
+computer = Intcode(m, name="BOOST")
+computer.set_input(2)
+computer.run()
+out = computer.output_buffer
+print(out[0])
