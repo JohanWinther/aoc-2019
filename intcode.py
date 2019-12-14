@@ -5,16 +5,16 @@ class Intcode():
         self.input_buffer = []
         self.output_buffer = []
         self.opcodes = {
-            1: {"nparams": 3, "fun": self.add},
-            2: {"nparams": 3, "fun": self.mul},
-            3: {"nparams": 1, "fun": self.inp},
-            4: {"nparams": 1, "fun": self.out},
-            5: {"nparams": 2, "fun": self.jit},
-            6: {"nparams": 2, "fun": self.jif},
-            7: {"nparams": 3, "fun": self.lt},
-            8: {"nparams": 3, "fun": self.eq},
-            9: {"nparams": 1, "fun": self.rb},
-            99: {"nparams": 0, "fun": self.exit},
+            1: {"nparams": [0,0,1], "fun": self.add},
+            2: {"nparams": [0,0,1], "fun": self.mul},
+            3: {"nparams": [1], "fun": self.inp},
+            4: {"nparams": [0], "fun": self.out},
+            5: {"nparams": [0,0], "fun": self.jit},
+            6: {"nparams": [0,0], "fun": self.jif},
+            7: {"nparams": [0,0,1], "fun": self.lt},
+            8: {"nparams": [0,0,1], "fun": self.eq},
+            9: {"nparams": [0], "fun": self.rb},
+            99: {"nparams": [], "fun": self.exit},
         }
         self.reset()
     
@@ -71,75 +71,77 @@ class Intcode():
         
         param_mode = self.read_memory(self.ip) // 100
         if oc['fun'](
-            param_mode,
-            [self.read_memory(i+1) for i in range(self.ip, self.ip+oc['nparams'])]):
-                self.ip += oc['nparams'] + 1
+            self.parse_params(
+                param_mode,
+                oc['nparams'],
+                [self.read_memory(i + 1) for i in range(self.ip, self.ip + len(oc['nparams']))],
+                )
+            ):
+                self.ip += len(oc['nparams']) + 1
 
-    def parse_params(self, param_mode, params):
-        return list(self.param_generator(param_mode, params))
+    def parse_params(self, param_mode, write_mode, params, ):
+        return list(self.param_generator(param_mode, write_mode, params))
 
-    def param_generator(self, param_modes, params):
+    def param_generator(self, param_modes, write_mode, params):
         for i, p in enumerate(params):
             param_mode = param_modes // 10 ** i % 10
             if param_mode == 0:
-                yield self.read_memory(p)
+                if write_mode[i]:
+                    yield p
+                else:
+                    yield self.read_memory(p)
             elif param_mode == 1:
                 yield p
             elif param_mode == 2:
-                yield self.read_memory(self.relative_base+p)
+                if write_mode[i]:
+                    yield self.relative_base+p
+                else:
+                    yield self.read_memory(self.relative_base+p)
             else:
                 return ValueError("Invalid parameter mode.")
 
-    def add(self, param_mode, params):
-        parsed_params = self.parse_params(param_mode, params)
-        self.write_memory(params[2], parsed_params[0] + parsed_params[1])
+    def add(self, parsed_params):
+        self.write_memory(parsed_params[2], parsed_params[0] + parsed_params[1])
         return True
 
-    def mul(self, param_mode, params):
-        parsed_params = self.parse_params(param_mode, params)
-        self.write_memory(params[2], parsed_params[0] * parsed_params[1])
+    def mul(self, parsed_params):
+        self.write_memory(parsed_params[2], parsed_params[0] * parsed_params[1])
         return True
 
-    def inp(self, param_mode, params):
-        self.write_memory(params[0], self.input_buffer.pop(0))
+    def inp(self, parsed_params):
+        self.write_memory(parsed_params[0], self.input_buffer.pop(0))
         return True
     
-    def out(self, param_mode, params):
-        parsed_params = self.parse_params(param_mode, params)
+    def out(self, parsed_params):
         self.output_buffer.append(parsed_params[0])
         return True
 
-    def jit(self, param_mode, params):
-        parsed_params = self.parse_params(param_mode, params)
+    def jit(self, parsed_params):
         if parsed_params[0]:
             self.ip = parsed_params[1]
             return False
         else:
             return True
 
-    def jif(self, param_mode, params):
-        parsed_params = self.parse_params(param_mode, params)
+    def jif(self, parsed_params):
         if not parsed_params[0]:
             self.ip = parsed_params[1]
             return False
         else:
             return True
 
-    def lt(self, param_mode, params):
-        parsed_params = self.parse_params(param_mode, params)
-        self.write_memory(params[2], int(parsed_params[0] < parsed_params[1]))
+    def lt(self, parsed_params):
+        self.write_memory(parsed_params[2], int(parsed_params[0] < parsed_params[1]))
         return True
     
-    def eq(self, param_mode, params):
-        parsed_params = self.parse_params(param_mode, params)
-        self.write_memory(params[2], int(parsed_params[0] == parsed_params[1]))
+    def eq(self, parsed_params):
+        self.write_memory(parsed_params[2], int(parsed_params[0] == parsed_params[1]))
         return True
     
-    def rb(self, param_mode, params):
-        parsed_params = self.parse_params(param_mode, params)
+    def rb(self, parsed_params):
         self.relative_base += parsed_params[0]
         return True
         
-    def exit(self, param_mode, params):
+    def exit(self, parsed_params):
         self.completed = True
         return False
