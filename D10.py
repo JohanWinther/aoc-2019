@@ -60,7 +60,7 @@ def get_ith_vaporized(sorted_asteroids, i):
     return sorted_asteroids[i-1]
 
 # Day 10.1
-print("Day 10.2")
+print("Day 10.1")
 
 # Test 1:
 print("Test 1:")
