@@ -1,4 +1,5 @@
 from itertools import combinations
+from math import gcd
 
 def moons_from_text(t):
     return [[int(n.split('=')[1]) for n in m.replace('<', '').replace('>', '').split(', ')]+[0,0,0] for m in t.split('\n')]
@@ -9,18 +10,14 @@ def simulate_moons(moons, steps=None):
             propagate_timestep(moons)
         yield 0
     else:
-        moons_start = [m.copy() for m in moons.copy()]
+        moons_start = [[moon[i] for moon in moons] for i in range(3)]
         step = 0
         while True:
             step += 1
             propagate_timestep(moons)
-            for i in range(len(moons)):
-                if moons[i] == moons_start[i]:
+            for i in range(3):
+                if [moon[i] for moon in moons] == moons_start[i] and [moon[i + 3] for moon in moons] == [0, 0, 0, 0]:
                     yield (i, step)
-    #    for i in [0, 1, 2, 3]:
-    #        for axis in [0, 1, 2]:
-    #            moons_position_list[i][axis].append(moons_position[i][axis])
-    #return moons_position_list
 
 def energy(moons):
     return sum([sum([abs(n) for n in moon[:3]]) * sum([abs(n) for n in moon[3:]]) for moon in moons])
@@ -38,12 +35,19 @@ def propagate_timestep(moons):
     for i in [0, 1, 2, 3]:
         for axis in [0, 1, 2]:
             moons[i][axis] += moons[i][axis + 3]
-    #return [moon[:3] for moon in moons]
 
-def frequency(signal):
-    frequency = 0
-    
-    return frequency
+def get_periods(moons):
+    periods = {i: 0 for i in range(3)}
+    period_gen = simulate_moons(moons)
+    while not all(periods.values()):
+        res = next(period_gen)
+        if periods[res[0]] == 0:
+            periods[res[0]] = res[1]
+            #print(periods)
+    periods = list(periods.values())
+    a, b, c = periods
+    return a * b * c // (gcd(a * b, c * gcd(a, b)))
+
 # Day 12.1
 print("Day 12.1")
 
@@ -85,7 +89,7 @@ moons = moons_from_text(t)
 next(simulate_moons(moons, steps=1000))
 out = energy(moons)
 print(moons)
-print(out, ends='\n\n')
+print(out, end='\n\n')
 
 # Day 12.2
 print("Day 12.2")
@@ -98,9 +102,9 @@ t = """
 <x=3, y=5, z=-1>
 """.lstrip().rstrip()
 moons = moons_from_text(t)
-step = simulate_moons(moons, 3000)
-print(step)
-print(step == 2772, end='\n\n')
+period = get_periods(moons)
+print(period)
+print(period == 2772, end='\n\n')
 
 # Test 2
 print("Test 2:")
@@ -111,39 +115,14 @@ t = """
 <x=9, y=-8, z=-3>
 """.lstrip().rstrip()
 moons = moons_from_text(t)
-step = simulate_moons(moons, 3000)
-print(step)
-print(step == 4686774924, end='\n\n')
+period = get_periods(moons)
+print(period)
+print(period == 4686774924, end='\n\n')
 
 # Solution
-#print("Solution:")
-#t = """
-#<x=-1, y=0, z=2>
-#<x=2, y=-10, z=-7>
-#<x=4, y=-8, z=8>
-#<x=3, y=5, z=-1>
-#""".lstrip().rstrip()
-#moons = moons_from_text(t)
-#step = simulate_moons(moons, 3000)
-#print(step)
-#fig = plt.figure(figsize=(4*10,3*10))
-#ax = fig.add_subplot(111, projection='3d')
-#for m in moons_positons[:1]:
-#    ax.plot([m[0][0]], [m[1][0]], [m[2][0]], '*k')
-#    ax.plot(m[0], m[1], m[2])
-#    ax.plot([m[0][-1]], [m[1][-1]], [m[2][-1]], '*r')
-#for m in range(4):
-#    for i in range(3):
-#        ax = fig.add_subplot(3,4,m*3+i+1)
-#        ax.plot(moons_positons[m][i])
-#ax = fig.add_subplot(111)
-#x = moons_positons[0][1]
-#w = np.fft.rfft(x)
-#freqs = np.fft.rfftfreq(len(x))*len(x)
-#ax.plot(freqs, w)
-##for coef,freq in zip(w,freqs):
-##    if coef:
-##        print('{c:>6} * exp(2 pi i t * {f})'.format(c=coef,f=freq))
-#
-#print(freqs)
-#fig.savefig('moons.png')
+print("Solution:")
+with open(__file__.replace(".py", "I.txt")) as f:
+    t = f.read().rstrip()
+moons = moons_from_text(t)
+period = get_periods(moons)
+print(period)
