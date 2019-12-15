@@ -67,8 +67,8 @@ robot.start()
 out = robot.painted_panels
 print(out)
 
-# Day 11.1
-print("Day 11.1")
+# Day 11.2
+print("Day 11.2")
 # Solution
 print("Solution:")
 robot = HullPaintingRobot(Intcode(m))
