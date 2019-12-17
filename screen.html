@@ -1,0 +1,152 @@
+<html>
+
+<head>
+    <title>Breakout!</title>
+    <meta charset="utf-8" />
+    <script type="text/javascript">
+
+        var ws, screen, canvas, score, ctx, gameTimer;
+        var direction = leftDown = rightDown = 0;
+        var gameStarted = false;
+        var lastScore = 0;
+        const bpm = 124;
+
+        function init() {
+            canvas = document.getElementById('screen');
+            canvas.scaling = 40;
+            canvas.width = 37 * canvas.scaling;
+            canvas.height = 26 * canvas.scaling;
+            if (canvas.getContext) {
+                ctx = canvas.getContext('2d');
+            }
+            resetCanvas();
+
+            window.onkeyup = function (e) {
+                if (e.keyCode == 37 || e.keyCode == 39) {
+                    if (e.keyCode == 37 && leftDown) {
+                        leftDown = 0;
+                    } else if (e.keyCode == 39 && rightDown) {
+                        rightDown = 0;
+                    }
+                    direction = (rightDown>0) - (leftDown>0);
+                }
+            }
+            window.onkeydown = function (e) {
+                if (e.keyCode == 37 || e.keyCode == 39) {
+                    if (e.keyCode == 37 && !leftDown) {
+                        leftDown = 1;
+                    } else if (e.keyCode == 39 && !rightDown) {
+                        rightDown = 1;
+                    }
+                    direction = (rightDown > 0) - (leftDown > 0);
+                }
+            }
+
+            // Connect to Web Socket
+            ws = new WebSocket("ws://localhost:5300/");
+
+            // Set event handlers.
+            ws.onopen = function () {
+                console.log('Server connected.')
+                gameTimer = setInterval(()=>{
+                    if (gameStarted)
+                        sendDirection();
+                }, 60*1000/bpm);
+            };
+
+            ws.onmessage = function (e) {
+                output(e.data);
+            };
+
+            ws.onclose = function () {
+                console.log('Server closed.')
+                resetCanvas();
+                clearInterval(gameTimer);
+            };
+
+            ws.onerror = function (e) {
+                console.log(e)
+            };
+        }
+
+
+        function resetCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function sendDirection() {
+            ws.send(direction);
+        }
+
+        function onCloseClick() {
+            ws.close();
+        }
+
+        function output(str) {
+            var block = str.split(',');
+            if (block[0] == '-1' && block[1] == '0') {
+                if (lastScore && block[2]==0) {
+                    alert(`Highscore: ${lastScore}`);
+                }
+                scoreTxt = `Score: ${block[2]}`;
+                lastScore = block[2];
+                gameStarted = true;
+                console.log(scoreTxt);
+                document.title = scoreTxt;
+            } else {
+                switch (block[2]) {
+                    case '0':
+                        ctx.fillStyle = 'black';
+                        break;
+                    case '1':
+                        ctx.fillStyle = 'white';
+                        break;
+                    case '2':
+                        ctx.fillStyle = 'blue';
+                        break;
+                    case '3':
+                        ctx.fillStyle = 'white';
+                        break;
+                    case '4':
+                        ctx.fillStyle = 'red';
+                        break;
+                }
+                if (block[2] == '3') {
+                    ctx.fillRect(block[0] * canvas.scaling, block[1] * canvas.scaling, canvas.scaling, canvas.scaling / 2);
+                } else {
+                    ctx.fillRect(block[0] * canvas.scaling, block[1] * canvas.scaling, canvas.scaling, canvas.scaling);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            screen = document.getElementById('screen');
+            score = document.getElementById('score');
+            init();
+        }, false);
+
+    </script>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            background-color: black;
+        }
+
+        #screen {
+            height: 100vh;
+            border-left: 1px solid white;
+            border-right: 1px solid white;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="screen"></canvas>
+</body>
+
+</html>

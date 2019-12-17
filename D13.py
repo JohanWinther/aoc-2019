@@ -1,4 +1,6 @@
 from intcode import Intcode
+from screen import Screen
+import time
 
 class Arcade():
     def __init__(self):
@@ -6,22 +8,28 @@ class Arcade():
             t = f.read().rstrip()
         self.brain = Intcode([int(n) for n in t.split(',')])
         self.grid = {}
-        self.tiles = {
-            0: '  ',
-            1: '⬛ ',
-            2: '⬜ ',
-            3: '➖ ',
-            4: '⚽ ',
-        }
+        self.screen = None
+        self.grid_drawn = False
+        self.paddle = (0, 0)
+        self.ball = (0, 0)
 
     def start(self):
+        self.brain.m[0] = 2
         di = self.drawing_instruction()
         while not self.brain.completed:
             instruction = next(di)
             if instruction:
                 self.draw(instruction)
-                if instruction[0] == 36 and instruction[1] == 25:
-                    self.print_grid()
+                self.screen.send_message(','.join([str(n) for n in instruction]))
+
+                if instruction[2] == 3:
+                    self.paddle = (instruction[0], instruction[1])
+                elif instruction[2] == 4:
+                    self.ball = (instruction[0], instruction[1])
+                if instruction[2] == 4:
+                    direction = (self.paddle[0] < self.ball[0]) - (self.paddle[0] > self.ball[0])
+                    self.brain.set_input(direction)
+                    #time.sleep(60/124)
 
     def drawing_instruction(self):
         while True:
@@ -38,7 +46,7 @@ class Arcade():
     def print_grid(self):
         for y in range(max(self.grid, key=lambda x: x[1])[1]+1):
             for x in range(max(self.grid)[0] + 1):
-                print(self.tiles[self.grid[(x, y)]], end='')
+                print(str(self.grid[(x, y)]), end='')
             print('\n', end='')
 
     def num_of_tiles(self, tile_id):
@@ -49,7 +57,15 @@ class Arcade():
                     tiles += 1
         return tiles
 
-machine = Arcade()
-machine.start()
+#machine = Arcade()
+#machine.start()
 # Day 13.1
-print(machine.num_of_tiles(2))
+#print(machine.num_of_tiles(2))
+
+screen = Screen()
+arcade = Arcade()
+arcade.screen = screen
+#screen.arcade = arcade
+screen.run()
+time.sleep(2)
+arcade.start()
