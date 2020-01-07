@@ -1,9 +1,11 @@
+from collections import deque
+
 class Intcode():
     def __init__(self, m, name='Unnamed Computer'):
         self.name = name
         self.m_start = {i:v for i, v in enumerate(m)}
-        self.input_buffer = []
-        self.output_buffer = []
+        self.input_buffer = deque()
+        self.output_buffer = deque()
         self.opcodes = {
             1: {"nparams": [0,0,1], "fun": self.add},
             2: {"nparams": [0,0,1], "fun": self.mul},
@@ -24,9 +26,9 @@ class Intcode():
         self.relative_base = 0
         self.completed = False
         while (self.input_buffer):
-            self.input_buffer.pop(0)
+            self.input_buffer.popleft()
         while (self.output_buffer):
-            self.output_buffer.pop(0)
+            self.output_buffer.popleft()
     
     def read_memory(self, loc):
         if loc < 0:
@@ -109,7 +111,7 @@ class Intcode():
         return True
 
     def inp(self, parsed_params):
-        self.write_memory(parsed_params[0], self.input_buffer.pop(0))
+        self.write_memory(parsed_params[0], self.input_buffer.popleft())
         return True
     
     def out(self, parsed_params):

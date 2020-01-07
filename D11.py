@@ -25,12 +25,12 @@ class HullPaintingRobot():
         if self.brain.completed:
             return
         # Draw panel
-        self.hull[coord] = self.brain.output_buffer.pop(0)
+        self.hull[coord] = self.brain.output_buffer.popleft()
         if not panel_painted_before:
             self.painted_panels += 1
         # Turn
         self.brain.run_until_output()
-        self.direction = (self.direction + (self.brain.output_buffer.pop(0) * 2 - 1)) % 4
+        self.direction = (self.direction + (self.brain.output_buffer.popleft() * 2 - 1)) % 4
         # Move
         c = exp(1j * pi / 2 * (self.direction - 1))
         self.x += round(c.real)

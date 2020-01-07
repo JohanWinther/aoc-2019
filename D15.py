@@ -56,7 +56,7 @@ class RepairRobot():
             coord = (self.x, self.y + (direction * 2 - 3))
         else:
             coord = (self.x + (direction * 2 - 7), self.y)
-        out = self.brain.output_buffer.pop(0)
+        out = self.brain.output_buffer.popleft()
         self.hull[coord] = out
         if out == 2 and not self.oxygen:
             print(f'Oxygen system found at {coord}')

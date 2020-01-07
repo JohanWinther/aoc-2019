@@ -37,7 +37,7 @@ class Arcade():
             for i in range(3):
                 self.brain.run_until_output()
                 if not self.brain.completed:
-                    out.append(self.brain.output_buffer.pop(0))
+                    out.append(self.brain.output_buffer.popleft())
             yield out
 
     def draw(self, instruction):
