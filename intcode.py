@@ -147,3 +147,9 @@ class Intcode():
     def exit(self, parsed_params):
         self.completed = True
         return False
+
+    def __repr__(self):
+        return f"{self.__class__.__module__}.{self.__class__.__name__}({[v for v in self.m.values()]},name='{self.name}')"
+
+    def __str__(self):
+        return str(self.__dict__)
