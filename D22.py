@@ -118,6 +118,88 @@ class MathDeck():
             elif "deal with increment " in instruction:
                 self.shuffles.append((2, int(instruction[20:])))
 
+    def compact_multiple(self, iterations):
+        factor = self.compact(shuffles=self.shuffles)
+        self.shuffles = []
+
+        iterations_left = self.length - iterations - 1
+        while iterations_left != 0:
+            if iterations_left % 2 == 1:
+                self.shuffles += factor
+                self.compact()
+            factor += factor
+            factor = self.compact(shuffles=factor)
+            iterations_left //= 2
+
+    def compact(self, shuffles=None):
+        
+        will_return = True
+        if not shuffles:
+            will_return = False
+            shuffles = self.shuffles
+
+        # Compact rev
+        compacted = []
+        reverse = False
+        for method, value in shuffles:
+            if method == 0:
+                reverse = not reverse
+                continue
+            elif not reverse:
+                compacted.append((method, value))
+                continue
+            elif method == 1:
+                cut = (value + self.length) % self.length
+                compacted.append((1, self.length - cut))
+            elif method == 2:
+                compacted.append((method, value))
+                compacted.append((1, self.length + 1 - value))
+        if reverse:
+            compacted.append((0, 0))
+
+            
+        shuffles = compacted
+        # Compact cut
+        compacted = []
+        cut = 0
+        for method, value in shuffles:
+            if method == 0:
+                if cut != 0:
+                    compacted.append((1, cut))
+                    cut = 0
+                compacted.append((method, value))
+            elif method == 1:
+                cut = (cut + value) % self.length
+            elif method == 2:
+                compacted.append((method, value))
+                cut = (cut * value) % self.length
+
+        if cut != 0:
+            compacted.append((1, cut))
+            cut = 0
+
+        shuffles = compacted
+        # Compact inc
+        compacted = []
+        increment = 1
+        for method, value in shuffles:
+            if method == 2:
+                increment = (increment * value) % self.length
+            else:
+                if increment != 1:
+                    compacted.append((2, increment))
+                    increment = 1
+                compacted.append((method, value))
+
+        if increment != 1:
+            compacted.append((2, increment))
+            increment = 1
+
+        if not will_return:
+            self.shuffles = compacted
+        else:
+            return compacted
+
     def cards(self):
         for position in range(self.length):
             yield self.card(position)
@@ -169,10 +251,7 @@ class MathDeck():
         shuffles = ['rev', 'cut', 'inc']
         return (
             "Shuffles:\n" +
-            "\n".join([f"{shuffles[s[0]]} {s[1] if s[0] != 0 else ''}" for s in self.shuffles]) + "\n" +
-            "\n" +
-            "Cards:\n" +
-            " ".join([str(card) for card in list(self.cards())])
+            "\n".join([f"{shuffles[s[0]]} {s[1] if s[0] != 0 else ''}" for s in self.shuffles])
         )
 
 
@@ -201,6 +280,7 @@ start = timer()
 
 deck = MathDeck(10007)
 deck.parse(instructions)
+deck.compact()
 pos = deck.find(2019)
 
 end = timer()
@@ -212,4 +292,21 @@ print()
 
 print("Modulus math is", int(list_result // math_result), "times faster")
 
+print()
+
 # Part 2
+CARDS = 119315717514047
+SHUFFLES = 101741582076661
+POSITION = 2020
+
+start = timer()
+
+deck = MathDeck(CARDS)
+deck.parse(instructions)
+deck.compact_multiple(SHUFFLES)
+card = deck.find(POSITION)
+
+end = timer()
+math_result = end - start
+print("Time:", end - start, "s")
+print("Card", card, "is at", POSITION)
